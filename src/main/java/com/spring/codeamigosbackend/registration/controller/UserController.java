@@ -56,7 +56,7 @@ import org.springframework.web.bind.annotation.RequestBody; // For @RequestBody 
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-    private static Dotenv dotenv = Dotenv.load();
+    private static Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
     private static final String SECRET_KEY = dotenv.get("JWT_SECRET_KEY"); // Store in env variable
     private final UserService userService;
     private final FrameworkController frameworkController;

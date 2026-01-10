@@ -29,7 +29,7 @@ public class GithubAnalysisService {
         String model = null;
         try {
             // Try loading from .env
-            var dotenv = Dotenv.load();
+            var dotenv = Dotenv.configure().ignoreIfMissing().load();
             key = dotenv.get("GEMINI_API_KEY");
             model = dotenv.get("GEMINI_MODEL");
         } catch (Exception e) {
@@ -53,7 +53,8 @@ public class GithubAnalysisService {
 
         this.geminiApiKey = key;
         // Default to a current broadly available model if none is configured
-        // NOTE: Older 1.5 models like "gemini-1.5-flash" / "gemini-1.5-pro" have been retired.
+        // NOTE: Older 1.5 models like "gemini-1.5-flash" / "gemini-1.5-pro" have been
+        // retired.
         this.geminiModel = (model == null || model.isEmpty()) ? "gemini-2.5-flash" : model;
 
         String maskedKey = (geminiApiKey != null && geminiApiKey.length() > 5)
@@ -213,7 +214,8 @@ public class GithubAnalysisService {
                 message = """
                         Gemini model not found. The configured model name '%s' is not available for your API key / project (older 1.5 models have likely been retired).
                         Set GEMINI_MODEL to a supported model (for example: 'gemini-2.5-flash' or 'gemini-2.5-pro') and ensure your GEMINI_API_KEY is valid.
-                        """.formatted(geminiModel);
+                        """
+                        .formatted(geminiModel);
             }
 
             e.printStackTrace();

@@ -24,7 +24,7 @@ import java.util.Optional;
 @RequestMapping("/oauth2")
 public class OAuth2LoginController {
 
-    private static Dotenv dotenv = Dotenv.load();
+    private static Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
     private static final String SECRET_KEY = dotenv.get("JWT_SECRET_KEY"); // Store in env variable
     @Autowired
     private UserRepository userRepository;
@@ -44,7 +44,7 @@ public class OAuth2LoginController {
         OAuth2User oAuth2User = authentication.getPrincipal();
         int githubId = oAuth2User.getAttribute("id");
         String githubUsername = oAuth2User.getAttribute("login");
-//        String email = oAuth2User.getAttribute("email");
+        // String email = oAuth2User.getAttribute("email");
         String avatarUrl = oAuth2User.getAttribute("avatar_url");
 
         Optional<User> optionalUser = userRepository.findByGithubId(githubId);
@@ -57,7 +57,7 @@ public class OAuth2LoginController {
             user.setGithubId(githubId);
             user.setGithubUsername(githubUsername);
             user.setGithubAvatarUrl(avatarUrl);
-//            user.setEmail(email != null ? email : githubUsername + "@github.com");
+            // user.setEmail(email != null ? email : githubUsername + "@github.com");
             user.setProfileComplete(false);
             userRepository.save(user);
         }
@@ -69,8 +69,7 @@ public class OAuth2LoginController {
             // redirect to frontend register form
             String redirectUrl = String.format(
                     url + "/register?oauth=true&username=%s&id=%s",
-                    githubUsername, user.getId()
-            );
+                    githubUsername, user.getId());
             RedirectView redirectView = new RedirectView(redirectUrl);
             redirectView.setExposeModelAttributes(false);
             return redirectView;
@@ -88,7 +87,7 @@ public class OAuth2LoginController {
 
         Cookie cookie = new Cookie("jwtToken", jwtToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);  // only if HTTPS
+        cookie.setSecure(true); // only if HTTPS
         cookie.setPath("/");
         cookie.setMaxAge(86400);
         response.addCookie(cookie);
@@ -100,17 +99,16 @@ public class OAuth2LoginController {
         String decryptedToken = EncryptionUtil.decrypt(user.getGithubAccessToken(), SECRET_KEY);
         githubScoreRequest.setAccessToken(decryptedToken);
         githubScoreRequest.setUsername(user.getGithubUsername());
-        System.out.println("decrepted github access token"+decryptedToken);
+        System.out.println("decrepted github access token" + decryptedToken);
         System.out.println(githubScoreRequest);
         logger.info("Github Framework: " + githubScoreRequest);
         rabbitMqProducer.sendUserToQueue(githubScoreRequest);
 
-
-//        String redirectUrl = String.format(
-//                url + "/dashboard?username=%s&userId=%s&githubUsername=%s&status=%s",
-//                user.getUsername(), user.getId(), user.getGithubUsername(), user.getStatus()
-//        );
-        String redirectUrl = String.format(url+"/dashboard");
+        // String redirectUrl = String.format(
+        // url + "/dashboard?username=%s&userId=%s&githubUsername=%s&status=%s",
+        // user.getUsername(), user.getId(), user.getGithubUsername(), user.getStatus()
+        // );
+        String redirectUrl = String.format(url + "/dashboard");
 
         RedirectView redirectView = new RedirectView(redirectUrl);
         redirectView.setExposeModelAttributes(false);

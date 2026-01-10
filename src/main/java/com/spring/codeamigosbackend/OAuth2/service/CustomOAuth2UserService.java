@@ -1,6 +1,5 @@
 package com.spring.codeamigosbackend.OAuth2.service;
 
-
 import com.spring.codeamigosbackend.OAuth2.util.EncryptionUtil;
 import com.spring.codeamigosbackend.registration.model.User;
 import com.spring.codeamigosbackend.registration.repository.UserRepository;
@@ -21,7 +20,7 @@ import java.util.Optional;
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private static Dotenv dotenv = Dotenv.load();
+    private static Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
     private static final String SECRET_KEY = dotenv.get("JWT_SECRET_KEY"); // Store in env variable
 
     @Autowired
@@ -29,7 +28,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-      OAuth2User oAuth2User = super.loadUser(userRequest);
+        OAuth2User oAuth2User = super.loadUser(userRequest);
 
         System.out.println("custom user detail service: " + oAuth2User);
         Map<String, Object> attributes = oAuth2User.getAttributes();
@@ -52,14 +51,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             user.setGithubId(githubId);
             user.setGithubUsername(githubLogin);
             user.setGithubAvatarUrl(avatarUrl);
-//            user.setEmail(email != null ? email : githubLogin + "@github.com");
+            // user.setEmail(email != null ? email : githubLogin + "@github.com");
             user.setProfileComplete(false); // Mark incomplete so frontend shows registration form
         }
         System.out.println(user.getGithubAccessToken());
         // Encrypt token before saving
         String encryptedToken = EncryptionUtil.encrypt(accessToken, SECRET_KEY);
         user.setGithubAccessToken(encryptedToken); // <-- Replace direct assignment
-        System.out.println("encrypted github access token"+encryptedToken);
+        System.out.println("encrypted github access token" + encryptedToken);
         // Save any updates (token, avatar, etc.)
         userRepository.save(user);
 
