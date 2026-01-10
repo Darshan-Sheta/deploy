@@ -101,18 +101,21 @@ public class UserController {
             Claims claims = jwtUtil.validateToken(token);
 
             System.out.println(claims.get("username", String.class));
-            String id = claims.get("id", String.class);
-            String email = claims.get("email", String.class);
-            String username = claims.get("username", String.class);
-            String status = claims.get("status", String.class);
+            Optional<User> userOpt = userRepository.findById(id);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            User fullUser = userOpt.get();
 
-            Map<String, String> user = Map.of(
+            Map<String, String> userMap = Map.of(
                     "id", id,
                     "email", email,
                     "username", username,
-                    "status", status);
+                    "status", status,
+                    "encryptedPrivateKey", fullUser.getEncryptedPrivateKey() != null ? fullUser.getEncryptedPrivateKey() : "",
+                    "privateKeyIv", fullUser.getPrivateKeyIv() != null ? fullUser.getPrivateKeyIv() : "");
 
-            return ResponseEntity.ok(user);
+            return ResponseEntity.ok(userMap);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
         }
@@ -144,6 +147,8 @@ public class UserController {
                 // System.out.println(user.getRsaPublicKey());
                 String encryptPublickey = EncryptionUtil.encrypt(user.getRsaPublicKey(), SECRET_KEY);
                 u.setRsaPublicKey(encryptPublickey);
+                u.setEncryptedPrivateKey(user.getEncryptedPrivateKey());
+                u.setPrivateKeyIv(user.getPrivateKeyIv());
                 savedUser = userRepository.save(u);
             } else {
                 savedUser = userRepository.save(user);
